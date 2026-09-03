@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071525">
+<title>EMBixa</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#071525;--card:#102235;--green:#18c58f;--orange:#ff8a32;--muted:#91a1b3;--white:#f7fafc}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--navy);color:var(--white)}
+.app{max-width:520px;margin:auto;min-height:100vh;padding-bottom:82px}.top{padding:22px 18px 10px;display:flex;align-items:center;gap:10px}
+.logo{width:43px;height:43px;border-radius:13px;background:linear-gradient(135deg,var(--green),var(--orange));display:grid;place-items:center;font-weight:900}
+.brand{font-size:25px;font-weight:900}.page{display:none;padding:10px 18px 28px}.page.active{display:block}
+h1{font-size:29px;margin:12px 0 3px}p{color:var(--muted)}.ask,.input{width:100%;border:0;border-radius:16px;padding:16px;background:var(--card);color:white;margin:10px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{background:var(--card);border-radius:17px;padding:17px;margin:10px 0}
+.action{min-height:130px;cursor:pointer}.ico{font-size:28px;color:var(--green)}.title{font-weight:850;margin-top:22px}.small{font-size:12px;color:var(--muted)}
+button{border:0;border-radius:14px;padding:13px 16px;font-weight:800;cursor:pointer}.primary{background:var(--green);color:#04140f;width:100%}.secondary{background:#193047;color:white}
+.row{display:flex;gap:8px}.row>*{flex:1}.chip{display:inline-block;padding:7px 10px;border-radius:999px;background:#163047;margin:3px;font-size:12px}
+.item{background:var(--card);border-radius:15px;padding:15px;margin:10px 0}.price{font-size:22px;font-weight:900;color:var(--green)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:72px;background:#0c1d2e;border-top:1px solid #20364b;display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;background:none;color:#8091a5;padding:6px 2px;font-size:11px}.nav button.active{color:var(--green)}.nav b{display:block;font-size:20px}
+label{font-size:12px;color:var(--muted)}select,textarea{width:100%;background:var(--card);color:white;border:0;border-radius:14px;padding:14px;margin:7px 0 12px}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:white;color:#071525;padding:11px 15px;border-radius:12px;display:none;z-index:20;font-weight:700}
+.verify{color:var(--green)}.pending{color:#708096}
+</style>
+</head>
+<body><div class="app">
+<div class="top"><div class="logo">EX</div><div class="brand">EMBixa</div><div style="margin-left:auto">🔔</div></div>
+
+<section id="home" class="page active">
+<h1>Good evening 👋</h1><p>What do you need today?</p>
+<input id="askBox" class="ask" placeholder="✨ Ask EMBixa anything...">
+<div class="grid">
+<div class="card action" onclick="go('services')"><div class="ico">🛠</div><div class="title">Find a Service</div><div class="small">Get trusted local help</div></div>
+<div class="card action" onclick="go('work')"><div class="ico">💼</div><div class="title">Find Work</div><div class="small">Jobs & opportunities</div></div>
+<div class="card action" onclick="go('services');openQuote()"><div class="ico">🧾</div><div class="title">Get Quotes</div><div class="small">Compare providers</div></div>
+<div class="card action" onclick="go('trust')"><div class="ico">🛡</div><div class="title">Check Trust</div><div class="small">View verification status</div></div>
+</div>
+<h3>Coming next</h3><div><span class="chip">Protect</span><span class="chip">Save</span><span class="chip">Move</span><span class="chip">Community</span><span class="chip">Energy</span><span class="chip">Pay</span></div>
+</section>
+
+<section id="services" class="page">
+<h1>Services</h1><p>Find trusted help and request quotations.</p>
+<button class="primary" onclick="openQuote()">＋ Request a quote</button>
+<div id="requestForm" class="card" style="display:none">
+<label>Category</label><select id="cat"><option>Welding & Fabrication</option><option>Plumbing</option><option>Electrical</option><option>Building & Handyman</option><option>Automotive</option><option>Cleaning</option></select>
+<input id="jobTitle" class="input" placeholder="Job title"><input id="area" class="input" placeholder="Area / suburb">
+<textarea id="desc" rows="4" placeholder="Describe the work"></textarea>
+<button class="primary" onclick="submitRequest()">Submit request</button>
+</div>
+<div id="requests"></div>
+<h3>Browse categories</h3>
+<div class="item">⚙️ Welding & Fabrication</div><div class="item">🔧 Plumbing</div><div class="item">⚡ Electrical</div><div class="item">🏗 Building & Handyman</div><div class="item">🚗 Automotive</div><div class="item">🧹 Cleaning</div>
+</section>
+
+<section id="work" class="page">
+<h1>Work</h1><p>Jobs, contracts and local opportunities.</p>
+<input class="input" placeholder="🔎 Search jobs or trades">
+<div class="item"><b>Trade-Tested Welder</b><p>Durban, KZN • Contract</p><div class="price">R250–R320/hr</div><button class="primary" onclick="apply(this)">Apply with EMBixa profile</button></div>
+<div class="item"><b>Boilermaker</b><p>Pinetown, KZN • Temporary</p><div class="price">Rate negotiable</div><button class="primary" onclick="apply(this)">Apply with EMBixa profile</button></div>
+<div class="item"><b>Maintenance Fitter</b><p>Richards Bay, KZN • Permanent</p><div class="price">Market related</div><button class="primary" onclick="apply(this)">Apply with EMBixa profile</button></div>
+</section>
+
+<section id="trust" class="page">
+<h1>EMBixa Trust</h1><p>Your reputation should travel with you.</p>
+<div class="card"><div style="font-size:48px">👤</div><h2>Demo Profile</h2><p>Trust profile • South Africa</p>
+<div class="item">Mobile number <span class="verify" style="float:right">✓ Verified</span></div>
+<div class="item">Email address <span class="verify" style="float:right">✓ Verified</span></div>
+<div class="item">Identity <span class="pending" style="float:right">Not verified</span></div>
+<div class="item">Qualification <span class="pending" style="float:right">Not verified</span></div>
+<div class="item">Business <span class="pending" style="float:right">Not verified</span></div>
+<button class="primary" onclick="toast('Shareable Trust profile coming next')">▦ Share Trust profile</button></div>
+<p class="small">EMBixa should only display a verification after the relevant check has actually been completed.</p>
+</section>
+
+<section id="profile" class="page">
+<h1>Profile</h1><p>One identity. Multiple roles.</p>
+<div class="card"><h2>Demo User</h2><p>Personal account</p></div>
+<div class="item">👷 Professional profile <span style="float:right">ON</span></div>
+<div class="item">🏢 Business profile <span style="float:right">OFF</span></div>
+<div class="item">📄 CV & documents</div><div class="item">💬 Messages</div><div class="item">🔔 Notifications</div><div class="item">🔐 Privacy & security</div><div class="item">⚙️ Settings</div>
+</section>
+
+<nav class="nav">
+<button class="active" data-p="home" onclick="go('home')"><b>⌂</b>Home</button>
+<button data-p="services" onclick="go('services')"><b>🛠</b>Services</button>
+<button data-p="work" onclick="go('work')"><b>💼</b>Work</button>
+<button data-p="trust" onclick="go('trust')"><b>🛡</b>Trust</button>
+<button data-p="profile" onclick="go('profile')"><b>👤</b>Profile</button>
+</nav>
+<div id="toast" class="toast"></div>
+</div>
+<script>
+const pages=[...document.querySelectorAll('.page')], nav=[...document.querySelectorAll('.nav button')];
+function go(id){pages.forEach(x=>x.classList.toggle('active',x.id===id));nav.forEach(x=>x.classList.toggle('active',x.dataset.p===id));scrollTo(0,0)}
+function openQuote(){document.getElementById('requestForm').style.display='block'}
+function submitRequest(){
+ let t=jobTitle.value.trim(),a=area.value.trim(); if(!t||!a){toast('Add a job title and area');return}
+ let d=document.createElement('div'); d.className='item'; d.innerHTML=`<b>${t}</b><p>${cat.value} • ${a}</p><span class="chip">OPEN</span><button class="secondary" style="float:right" onclick="quotes(this)">View quotes</button>`;
+ requests.prepend(d); jobTitle.value='';area.value='';desc.value='';requestForm.style.display='none';toast('Service request created')
+}
+function quotes(btn){
+ let d=document.createElement('div'); d.className='card'; d.innerHTML='<h3>Demo quotations</h3><div class="item"><b>KZN Trade Services ✓</b><p>★ 4.9 • Mobile & identity verified</p><div class="price">R850</div></div><div class="item"><b>Durban Pro Repairs</b><p>★ 4.7 • Mobile verified</p><div class="price">R975</div></div>'; btn.parentElement.after(d)
+}
+function apply(b){b.textContent='✓ Application submitted';b.disabled=true;toast('Application submitted')}
+function toast(m){let t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
+askBox.addEventListener('keydown',e=>{if(e.key==='Enter'){toast('Ask EMBixa AI routing is ready for backend connection');askBox.value=''}})
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+</script></body></html>
