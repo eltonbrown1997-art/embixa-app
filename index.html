@@ -23,6 +23,7 @@ label{font-size:12px;color:var(--muted)}select,textarea{width:100%;background:va
 .toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:white;color:#071525;padding:11px 15px;border-radius:12px;display:none;z-index:20;font-weight:700}
 .verify{color:var(--green)}.pending{color:#708096}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body><div class="app">
 <div class="top"><div class="logo">EX</div><div class="brand">EMBixa</div><div style="margin-left:auto">🔔</div></div>
@@ -74,11 +75,45 @@ label{font-size:12px;color:var(--muted)}select,textarea{width:100%;background:va
 </section>
 
 <section id="profile" class="page">
-<h1>Profile</h1><p>One identity. Multiple roles.</p>
-<div class="card"><h2>Demo User</h2><p>Personal account</p></div>
-<div class="item">👷 Professional profile <span style="float:right">ON</span></div>
-<div class="item">🏢 Business profile <span style="float:right">OFF</span></div>
-<div class="item">📄 CV & documents</div><div class="item">💬 Messages</div><div class="item">🔔 Notifications</div><div class="item">🔐 Privacy & security</div><div class="item">⚙️ Settings</div>
+  <div id="authLoggedOut">
+    <h1>Join EMBixa</h1>
+    <p>Create your account or sign in to continue.</p>
+    <div class="card">
+      <input id="authName" class="input" placeholder="Full name">
+      <input id="authEmail" class="input" type="email" placeholder="Email address">
+      <input id="authPassword" class="input" type="password" placeholder="Password (minimum 6 characters)">
+      <select id="authRole" class="input">
+        <option value="personal">Personal</option>
+        <option value="professional">Professional</option>
+        <option value="business">Business</option>
+      </select>
+      <button class="primary" onclick="signUp()">Create account</button>
+      <button class="primary" style="margin-top:10px;background:#ff8a32" onclick="signIn()">Sign in</button>
+      <p id="authMessage" class="small"></p>
+    </div>
+  </div>
+  <div id="authLoggedIn" style="display:none">
+    <h1>My EMBixa</h1>
+    <p>Your account and profile.</p>
+    <div class="card">
+      <div class="small">SIGNED IN AS</div>
+      <h2 id="profileEmail">—</h2>
+      <input id="profileName" class="input" placeholder="Full name">
+      <select id="profileRole" class="input">
+        <option value="personal">Personal</option>
+        <option value="professional">Professional</option>
+        <option value="business">Business</option>
+      </select>
+      <input id="profilePhone" class="input" placeholder="Phone">
+      <input id="profileBusiness" class="input" placeholder="Business name">
+      <input id="profileTrade" class="input" placeholder="Trade / profession">
+      <input id="profileLocation" class="input" placeholder="Area / location">
+      <textarea id="profileBio" class="input" rows="4" placeholder="About you"></textarea>
+      <button class="primary" onclick="saveProfile()">Save profile</button>
+      <button class="primary" style="margin-top:10px;background:#ff8a32" onclick="signOut()">Sign out</button>
+      <p id="profileMessage" class="small"></p>
+    </div>
+  </div>
 </section>
 
 <nav class="nav">
@@ -106,4 +141,84 @@ function apply(b){b.textContent='✓ Application submitted';b.disabled=true;toas
 function toast(m){let t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
 askBox.addEventListener('keydown',e=>{if(e.key==='Enter'){toast('Ask EMBixa AI routing is ready for backend connection');askBox.value=''}})
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
-</script></body></html>
+</script>
+<script>
+const EMBIXA_SUPABASE_URL = 'https://mtakoysatemgamlfhgal.supabase.co';
+const EMBIXA_SUPABASE_KEY = 'sb_publishable_8R3wmDe00uoacxe4iFIkmw_to3jogyU';
+const embixaDb = window.supabase.createClient(EMBIXA_SUPABASE_URL, EMBIXA_SUPABASE_KEY);
+
+function authMsg(text){ const e=document.getElementById('authMessage'); if(e)e.textContent=text||''; }
+function profileMsg(text){ const e=document.getElementById('profileMessage'); if(e)e.textContent=text||''; }
+
+async function signUp(){
+  authMsg('Creating account...');
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  const full_name=document.getElementById('authName').value.trim();
+  const role=document.getElementById('authRole').value;
+  if(!email || password.length<6){ authMsg('Enter a valid email and a password of at least 6 characters.'); return; }
+  const {data,error}=await embixaDb.auth.signUp({email,password,options:{data:{full_name,role}}});
+  if(error){ authMsg(error.message); return; }
+  if(data.session){ authMsg('Account created. Welcome to EMBixa.'); await refreshAccount(); }
+  else authMsg('Account created. Check your email to confirm your address, then sign in.');
+}
+
+async function signIn(){
+  authMsg('Signing in...');
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  const {error}=await embixaDb.auth.signInWithPassword({email,password});
+  if(error){ authMsg(error.message); return; }
+  authMsg('');
+  await refreshAccount();
+}
+
+async function signOut(){
+  await embixaDb.auth.signOut();
+  profileMsg('');
+  await refreshAccount();
+}
+
+async function loadProfile(user){
+  const {data,error}=await embixaDb.from('profiles').select('*').eq('id',user.id).single();
+  if(error){ profileMsg(error.message); return; }
+  document.getElementById('profileEmail').textContent=user.email||'';
+  document.getElementById('profileName').value=data.full_name||'';
+  document.getElementById('profileRole').value=data.role||'personal';
+  document.getElementById('profilePhone').value=data.phone||'';
+  document.getElementById('profileBusiness').value=data.business_name||'';
+  document.getElementById('profileTrade').value=data.trade||'';
+  document.getElementById('profileLocation').value=data.location||'';
+  document.getElementById('profileBio').value=data.bio||'';
+}
+
+async function saveProfile(){
+  const {data:{user}}=await embixaDb.auth.getUser();
+  if(!user) return;
+  profileMsg('Saving...');
+  const updates={
+    full_name:document.getElementById('profileName').value.trim(),
+    role:document.getElementById('profileRole').value,
+    phone:document.getElementById('profilePhone').value.trim(),
+    business_name:document.getElementById('profileBusiness').value.trim(),
+    trade:document.getElementById('profileTrade').value.trim(),
+    location:document.getElementById('profileLocation').value.trim(),
+    bio:document.getElementById('profileBio').value.trim()
+  };
+  const {error}=await embixaDb.from('profiles').update(updates).eq('id',user.id);
+  profileMsg(error ? error.message : 'Profile saved ✓');
+}
+
+async function refreshAccount(){
+  const {data:{session}}=await embixaDb.auth.getSession();
+  const loggedIn=!!session;
+  document.getElementById('authLoggedOut').style.display=loggedIn?'none':'block';
+  document.getElementById('authLoggedIn').style.display=loggedIn?'block':'none';
+  if(loggedIn) await loadProfile(session.user);
+}
+
+embixaDb.auth.onAuthStateChange(()=>setTimeout(refreshAccount,0));
+window.addEventListener('load',refreshAccount);
+</script>
+
+</body></html>
